@@ -131,6 +131,20 @@ export const updateProfile =async (req,res)=>{
      user.profile.skills=skillsArray
 //resume comes later yaha pr hi
      await user.save();
+  user = {
+        _id:user._id,
+        fullname:user.fullname,
+        email:user.email,
+        role:user.role,
+        profile:user.profile
+    }
+    return res.status(200).json({
+        message:"Profile Updated Successfully",
+        user,
+        success:true
+
+    })
+
     } catch (error) {
         console.log(error);
         
