@@ -1,4 +1,5 @@
 //admin post job
+import { Company } from "../models/company.model.js";
 import { Job } from "../models/job.model.js";
 export const postJob =async (req,res)=>{
     try {
@@ -42,7 +43,10 @@ export const getAllJobs = async(req,res)=>{
             {description:{$regex:keyword, $options:"i"}},
         ]
        };
-       const jobs = await Job.find(query); 
+       const jobs = await Job.find(query).populate({
+        path :"company"
+
+       }).sort({createdAt: -1})
        if(!jobs){
         return res.status(404).json({
             message:"job not found",
@@ -62,7 +66,7 @@ export const getAllJobs = async(req,res)=>{
 export const getjobById = async(req,res)=>{
     try {
         const jobId = req.params.id;
-        const job = await Job.findBYId(jobId);
+        const job = await Job.findById(jobId);
         if(!job){
             return res.status(400).json({
                 message:"jobs not found",
@@ -83,7 +87,7 @@ export const getAdminJobs=async (req,res)=>{
     try {
        const adminId = req.id;
        const jobs= await Job.find({created_by:adminId}) ;
-       if(!jobs){
+       if(!jobs || jobs.length===0){
           return res.status(400).json({
                 message:"jobs not found",
                 success:false
