@@ -5,11 +5,11 @@ import Signup from "./components/auth/Signup"
 import Home from "./components/Home"
 const appRouter = createBrowserRouter([
   {
-    path:'/',
+    path:'/home',
     element:<Home/>
   },
   {
-    path:'login',
+    path:'/login',
     element:<Login/>
   },
   {
