@@ -9,7 +9,11 @@ import { Link } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import axios from 'axios';
+import { Loader2 } from 'lucide-react'
 import { USER_API_END_POINT } from '../../utils/constant';
+import { useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
+import { setloading } from '@/redux/authSlice';
 const Signup = () => {
     const [input, setInput] = useState({
         fullname: "",
@@ -19,7 +23,9 @@ const Signup = () => {
         role: "",
         file: ""
     });
+     const {loading} = useSelector(store => store.auth);
     const navigate = useNavigate();
+    const dispatch = useDispatch();
     const changeEventHandler = (e) => {
         setInput({ ...input, [e.target.name]: e.target.value })
     }
@@ -39,6 +45,7 @@ if(input.file){
 
 }
         try {
+         dispatch(setloading(true));
             const res = await axios.post(`${USER_API_END_POINT}/register`,formData,{
             headers:{
                 "Content-type":"multipart/form-data"
@@ -54,7 +61,9 @@ console.log(error);
 const errorMessage = error.response?.data?.message || "An unexpected error occurred. Please try again.";
 toast.error(errorMessage);
         }
-        console.log(input);
+        finally{
+            dispatch(setloading(false));
+        }
     }
     return (
 
@@ -154,7 +163,10 @@ toast.error(errorMessage);
                         </div>
                     </div>
 
-                    <Button type="submit" className=" w-full my-4 py-6 text-lg bg-black text-white hover:bg-gray-800 ">Signup</Button>
+                     {
+loading ? <Button className = "w-full my-4" > <Loader2 className = 'mr-2 h-4 w-4 animate-spin'/>Please wait</Button> :
+<Button type="submit" className=" w-full my-4 py-6 text-lg bg-black text-white hover:bg-gray-800 ">Signup</Button>
+                    }
                     <div className='flex items-center justify-center w-full'>
                         Already have an account? <Link to="/Login" className='text-blue-600 font-medium ml-2'>Login</Link>
                     </div>

@@ -8,19 +8,26 @@ import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import axios from 'axios'
 import { USER_API_END_POINT } from '../../utils/constant'
+import { useDispatch, useSelector } from 'react-redux'
+import { setloading } from '@/redux/authSlice'
+import store from '@/redux/store'
+import { Loader2 } from 'lucide-react'
 const Login = () => {
   const [input, setInput] = useState({
     email:"",
     password:"",
     role:"",
   });
+  const {loading} = useSelector(store => store.auth);
 const navigate= useNavigate();
+const dispatch = useDispatch();
   const changeEventHandler=(e)=>{
     setInput({...input , [e.target.name]:e.target.value})
   }
           const submitHandler = async (e) => {
         e.preventDefault();
         try {
+dispatch(setloading(true));
             const res = await axios.post(`${USER_API_END_POINT}/login`,input,{
             headers:{
                 "Content-type":"application/json"
@@ -28,7 +35,7 @@ const navigate= useNavigate();
             withCredentials:true,
             });
             if(res.data.success){
-                navigate("/home");
+                navigate("/");
                 toast.success(res.data.message || "Logged in successfully!");
             }
         } catch (error) {
@@ -37,10 +44,12 @@ const errorMessage = error.response?.data?.message || "Login failed. Please try 
             toast.error(errorMessage);
 
         }
-        console.log(input);
-    }
-        console.log(input);
+       
     
+        finally{
+dispatch(setloading(false));
+        }
+          }
     return (
         <div className="h-screen flex flex-col bg-pink-50 overflow-hidden">
             <Navbar />
@@ -101,7 +110,11 @@ const errorMessage = error.response?.data?.message || "Login failed. Please try 
                         </RadioGroup>
                         
                     </div>
-                    <Button type="submit" className=" w-full my-4 py-6 text-lg bg-black text-white hover:bg-gray-800 ">Login</Button>
+                    {
+loading ? <Button className = "w-full my-4" > <Loader2 className = 'mr-2 h-4 w-4 animate-spin'/>Please wait</Button> :
+<Button type="submit" className=" w-full my-4 py-6 text-lg bg-black text-white hover:bg-gray-800 ">Login</Button>
+                    }
+                    
                     <div className='flex items-center justify-center w-full'>
                         Don't have an account? <Link to="/signup" className='text-blue-600 font-medium ml-2'>Signup</Link>
                     </div>
