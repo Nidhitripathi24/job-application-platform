@@ -1,6 +1,8 @@
 import bcrypt from "bcryptjs";
 import {User} from "../models/user.model.js";
 import jwt from "jsonwebtoken"
+import getDataUri from "../utils/datauri.js";
+import cloudinary from "../utils/cloudinary.js";
 export const register = async (req,res)=>{
     try {
      const {fullname,email, phoneNumber,password , role  }=req.body;
@@ -11,10 +13,14 @@ export const register = async (req,res)=>{
         });
 
      };
+
+     const file = req.file;
+     const fileUri = getDataUri(file);
+     const cloudResponse = await cloudinary.uploader.upload(fileUri.content)
      const user = await User.findOne ({email});
      if(user){
         return res.status(400).json({
-        message:'User already exixit with this email.',
+        message:'User already exists with this email.',
         success:false,
      })
     }
@@ -25,6 +31,9 @@ export const register = async (req,res)=>{
         phoneNumber,
         password: hashedPassword , 
         role,
+        profile:{
+        profilePhoto:cloudResponse.secure_url,
+        }
      });
 
      return res.status(201).json({
@@ -83,11 +92,12 @@ try {
         fullname:user.fullname,
         email:user.email,
         role:user.role,
+        phoneNumber: user.phoneNumber,
         profile:user.profile
     }
       return res.status(200).cookie("token",token, {maxAge: 1*24*60*60*1000, httpOnly: true, sameSite: 'strict'}).json({
         messoge:`Welcome back ${user.fullname}`,
-        user,
+        user:userResponse,
         success:true
       })
 } catch (error) {
@@ -110,15 +120,17 @@ export const logout = async (req,res)=>{
 export const updateProfile =async (req,res)=>{
     try {
         const {fullname, email, phoneNumber,bio,skills}=req.body
-        const file = req.file;
-;        
+        console.log(fullname,email,phoneNumber,bio,skills);
         
+        const file = req.file;       
+        const fileUri = getDataUri(file);
+        const cloudResponse = await cloudinary.uploader.upload(fileUri.content);
 
      
      //cloudinary aayega
      let skillsArray;
      if(skills){
-     const skillsArray= skills.split(",");
+    skillsArray= skills.split(",");
      }
      
      const userId = req.id; //comes from middleware authentication
@@ -135,9 +147,22 @@ export const updateProfile =async (req,res)=>{
      if(phoneNumber) user.phoneNumber= phoneNumber
      if(bio) user.profile.bio = bio
      if(skills) user.profile.skills = skillsArray
-     if(email) user.email=email
+     if(email && email !== user.email){
+            const existingUser = await User.findOne({ email });
+            if (existingUser) {
+                return res.status(400).json({
+                    message: "This email is already in use by another account.",
+                    success: false
+                });
+            }
+        }
      
 //resume comes later yaha pr hi
+if(cloudResponse){
+    user.profile.resume = cloudResponse.secure_url
+    user.profile.resumeOriginalName = file.originalname//save the original file name
+}
+
      await user.save();
   user = {
         _id:user._id,
